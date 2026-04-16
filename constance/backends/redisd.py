@@ -52,11 +52,7 @@ class RedisBackend(Backend):
         return f"{self._prefix}{key}"
 
     def _check_async_support(self):
-        if self._ard is None:
-            raise ImproperlyConfigured(
-                "Async support for the Redis backend requires redis>=4.2.0 "
-                "or a custom CONSTANCE_REDIS_ASYNC_CONNECTION_CLASS to be configured."
-            )
+        pass
 
     def get(self, key):
         value = self._rd.get(self.add_prefix(key))
@@ -65,11 +61,7 @@ class RedisBackend(Backend):
         return None
 
     async def aget(self, key):
-        self._check_async_support()
-        value = await self._ard.get(self.add_prefix(key))
-        if value:
-            return loads(value)
-        return None
+        pass
 
     def mget(self, keys):
         if not keys:
@@ -78,30 +70,20 @@ class RedisBackend(Backend):
         return {key: loads(value) for key, value in zip(keys, self._rd.mget(prefixed_keys)) if value}
 
     async def amget(self, keys):
-        if not keys:
-            return {}
-        self._check_async_support()
-        prefixed_keys = [self.add_prefix(key) for key in keys]
-        values = await self._ard.mget(prefixed_keys)
-        return {key: loads(value) for key, value in zip(keys, values) if value}
+        pass
 
     def set(self, key, value):
-        old_value = self.get(key)
-        self._rd.set(self.add_prefix(key), dumps(value))
-        signals.config_updated.send(sender=config, key=key, old_value=old_value, new_value=value)
+        pass
 
     async def _aset_internal(self, key, value, old_value):
         """
         Internal set operation. Separated to allow subclasses to provide old_value
         without going through self.aget() which may have locking behavior.
         """
-        self._check_async_support()
-        await self._ard.set(self.add_prefix(key), dumps(value))
-        signals.config_updated.send(sender=config, key=key, old_value=old_value, new_value=value)
+        pass
 
     async def aset(self, key, value):
-        old_value = await self.aget(key)
-        await self._aset_internal(key, value, old_value)
+        pass
 
 
 class CachingRedisBackend(RedisBackend):
@@ -117,9 +99,7 @@ class CachingRedisBackend(RedisBackend):
 
     def _get_async_lock(self):
         # Lazily create the asyncio lock to avoid issues with event loops
-        if self._async_lock is None:
-            self._async_lock = asyncio.Lock()
-        return self._async_lock
+        pass
 
     def _has_expired(self, value):
         return value[0] <= monotonic()
@@ -143,35 +123,16 @@ class CachingRedisBackend(RedisBackend):
         Get value with cache support but without acquiring lock.
         Caller must already hold the lock.
         """
-        value = self._cache.get(key, self._sentinel)
-        if value is self._sentinel or self._has_expired(value):
-            new_value = await super().aget(key)
-            self._cache_value(key, new_value)
-            return new_value
-        return value[1]
+        pass
 
     async def aget(self, key):
-        value = self._cache.get(key, self._sentinel)
-
-        if value is self._sentinel or self._has_expired(value):
-            async with self._get_async_lock():
-                # Double-check after acquiring lock, then delegate to unlocked version
-                return await self._aget_unlocked(key)
-
-        return value[1]
+        pass
 
     def set(self, key, value):
-        with self._lock:
-            super().set(key, value)
-            self._cache_value(key, value)
+        pass
 
     async def aset(self, key, value):
-        async with self._get_async_lock():
-            # Use unlocked version since we already hold the lock
-            old_value = await self._aget_unlocked(key)
-            # Use internal method to avoid lock recursion (super().aset calls self.aget)
-            await self._aset_internal(key, value, old_value)
-            self._cache_value(key, value)
+        pass
 
     def mget(self, keys):
         if not keys:
@@ -184,36 +145,4 @@ class CachingRedisBackend(RedisBackend):
         return result
 
     async def amget(self, keys):
-        if not keys:
-            return {}
-
-        results = {}
-        missing_keys = []
-
-        # First, check the local cache for all keys
-        for key in keys:
-            value = self._cache.get(key, self._sentinel)
-            if value is not self._sentinel and not self._has_expired(value):
-                results[key] = value[1]
-            else:
-                missing_keys.append(key)
-
-        # Fetch missing keys from Redis
-        if missing_keys:
-            async with self._get_async_lock():
-                # Re-check cache for keys that might have been fetched while waiting for lock
-                still_missing = []
-                for key in missing_keys:
-                    value = self._cache.get(key, self._sentinel)
-                    if value is not self._sentinel and not self._has_expired(value):
-                        results[key] = value[1]
-                    else:
-                        still_missing.append(key)
-
-                if still_missing:
-                    fetched = await super().amget(still_missing)
-                    for key, value in fetched.items():
-                        self._cache_value(key, value)
-                        results[key] = value
-
-        return results
+        pass

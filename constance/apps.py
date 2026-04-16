@@ -11,4 +11,4 @@ class ConstanceConfig(AppConfig):
     default_auto_field = "django.db.models.AutoField"
 
     def ready(self):
-        checks.register(check_fieldsets, "constance")
+        pass

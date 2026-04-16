@@ -21,10 +21,7 @@ class JSONEncoder(json.JSONEncoder):
     """Django-constance custom json encoder."""
 
     def default(self, o):
-        for discriminator, (t, _, encoder) in _codecs.items():
-            if isinstance(o, t):
-                return _as(discriminator, encoder(o))
-        raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+        pass
 
 
 def _as(discriminator: str, v: Any) -> dict[str, Any]:
@@ -53,17 +50,7 @@ def loads(s, _loads=json.loads, *, first_level=True, **kwargs):
 
 def object_hook(o: dict) -> Any:
     """Hook function to perform custom deserialization."""
-    if o.keys() == {"__type__", "__value__"}:
-        if o["__type__"] == DEFAULT_DISCRIMINATOR:
-            return o["__value__"]
-        codec = _codecs.get(o["__type__"])
-        if not codec:
-            raise ValueError(f"Unsupported type: {o['__type__']}")
-        return codec[1](o["__value__"])
-    if "__type__" not in o and "__value__" not in o:
-        return o
-    logger.error("Cannot deserialize object: %s", o)
-    raise ValueError(f"Invalid object: {o}")
+    pass
 
 
 T = TypeVar("T")

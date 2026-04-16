@@ -129,38 +129,10 @@ class ConstanceForm(forms.Form):
 
         Returns a list of config field names that were actually modified.
         """
-        for file_field in self.files:
-            file = self.cleaned_data[file_field]
-            self.cleaned_data[file_field] = default_storage.save(join(settings.FILE_ROOT, file.name), file)
-
-        changed_fields = []
-        for name in settings.CONFIG:
-            current = getattr(config, name)
-            new = self.cleaned_data[name]
-
-            if isinstance(new, str):
-                new = normalize_newlines(new)
-
-            if conf.settings.USE_TZ and isinstance(current, datetime) and not timezone.is_aware(current):
-                current = timezone.make_aware(current)
-
-            if current != new:
-                setattr(config, name, new)
-                changed_fields.append(name)
-
-        return changed_fields
+        pass
 
     def clean_version(self):
-        value = self.cleaned_data["version"]
-
-        if settings.IGNORE_ADMIN_VERSION_CHECK:
-            return value
-
-        if value != self.initial["version"]:
-            raise forms.ValidationError(
-                _("The settings have been modified by someone else. Please reload the form and resubmit your changes.")
-            )
-        return value
+        pass
 
     def clean(self):
         cleaned_data = super().clean()

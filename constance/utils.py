@@ -7,8 +7,7 @@ config = LazyConfig()
 
 
 def import_module_attr(path):
-    package, module = path.rsplit(".", 1)
-    return getattr(import_module(package), module)
+    pass
 
 
 def get_values():
@@ -27,9 +26,7 @@ async def aget_values():
     Get dictionary of values from the backend asynchronously
     :return:
     """
-    default_initial = {name: options[0] for name, options in settings.CONFIG.items()}
-    backend_values = await config.amget(settings.CONFIG.keys())
-    return dict(default_initial, **backend_values)
+    pass
 
 
 def get_values_for_keys(keys):
@@ -63,14 +60,4 @@ async def aget_values_for_keys(keys):
     :return: Dictionary with values for the specified keys.
     :raises AttributeError: If any key is not found in the configuration.
     """
-    if not isinstance(keys, (list, tuple, set)):
-        raise TypeError("keys must be a list, tuple, or set of strings")
-
-    default_initial = {name: options[0] for name, options in settings.CONFIG.items() if name in keys}
-
-    missing_keys = [key for key in keys if key not in default_initial]
-    if missing_keys:
-        raise AttributeError(f'"{", ".join(missing_keys)}" keys not found in configuration.')
-
-    backend_values = await config.amget(keys)
-    return dict(default_initial, **backend_values)
+    pass

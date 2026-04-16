@@ -17,23 +17,10 @@ class AsyncValueProxy:
         return self._get_value().__await__()
 
     async def _get_value(self):
-        if not self._fetched:
-            result = await self._config._backend.aget(self._key)
-            if result is None:
-                result = self._default
-                await self._config.aset(self._key, result)
-            self._value = result
-            self._fetched = True
-        return self._value
+        pass
 
     def _get_sync_value(self):
-        warnings.warn(
-            f"Synchronous access to Constance setting '{self._key}' inside an async loop. "
-            f"Use 'await config.{self._key}' instead.",
-            RuntimeWarning,
-            stacklevel=3,
-        )
-        return self._config._get_sync_value(self._key, self._default)
+        pass
 
     def __str__(self):
         return str(self._get_sync_value())
@@ -103,11 +90,7 @@ class Config:
         super().__setattr__("_backend", utils.import_module_attr(settings.BACKEND)())
 
     def _get_sync_value(self, key, default):
-        result = self._backend.get(key)
-        if result is None:
-            result = default
-            setattr(self, key, default)
-        return result
+        pass
 
     def __getattr__(self, key):
         if key == "_backend":
@@ -135,15 +118,10 @@ class Config:
         return
 
     async def aset(self, key, value):
-        if key not in settings.CONFIG:
-            raise AttributeError(key)
-        await self._backend.aset(key, value)
+        pass
 
     async def amget(self, keys):
-        backend_values = await self._backend.amget(keys)
-        # Merge with defaults like utils.get_values_for_keys
-        default_initial = {name: settings.CONFIG[name][0] for name in keys if name in settings.CONFIG}
-        return dict(default_initial, **backend_values)
+        pass
 
     def __dir__(self):
         return settings.CONFIG.keys()

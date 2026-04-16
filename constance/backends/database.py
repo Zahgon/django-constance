@@ -88,89 +88,16 @@ class DatabaseBackend(Backend):
         return value
 
     async def aget(self, key):
-        from asgiref.sync import sync_to_async
-
-        prefixed_key = self.add_prefix(key)
-        value = None
-        if self._cache:
-            value = await self._cache.aget(prefixed_key)
-            if value is None:
-                await sync_to_async(self.autofill, thread_sensitive=True)()
-                value = await self._cache.aget(prefixed_key)
-        if value is None:
-            match = await self._model._default_manager.filter(key=prefixed_key).only("value").afirst()
-            if match:
-                value = loads(match.value)
-                if self._cache:
-                    await self._cache.aadd(prefixed_key, value)
-        return value
+        pass
 
     async def amget(self, keys):
-        if not keys:
-            return {}
-
-        prefixed_keys_map = {self.add_prefix(key): key for key in keys}
-        results = {}
-
-        if self._cache:
-            cache_results = await self._cache.aget_many(prefixed_keys_map.keys())
-            for prefixed_key, value in cache_results.items():
-                results[prefixed_keys_map[prefixed_key]] = value
-
-        missing_prefixed_keys = [k for k in prefixed_keys_map if prefixed_keys_map[k] not in results]
-        if missing_prefixed_keys:
-            try:
-                async for const in self._model._default_manager.filter(key__in=missing_prefixed_keys):
-                    results[prefixed_keys_map[const.key]] = loads(const.value)
-            except (OperationalError, ProgrammingError):
-                pass
-
-        return results
+        pass
 
     def set(self, key, value):
-        key = self.add_prefix(key)
-        created = False
-        queryset = self._model._default_manager.all()
-        # Set _for_write attribute as get_or_create method does
-        # https://github.com/django/django/blob/2.2.11/django/db/models/query.py#L536
-        queryset._for_write = True
-
-        try:
-            constance = queryset.get(key=key)
-        except (OperationalError, ProgrammingError):
-            # database is not created, noop
-            return
-        except self._model.DoesNotExist:
-            try:
-                with transaction.atomic(using=queryset.db):
-                    queryset.create(key=key, value=dumps(value))
-                created = True
-            except IntegrityError:
-                # Allow concurrent writes
-                constance = queryset.get(key=key)
-
-        if not created:
-            old_value = loads(constance.value)
-            constance.value = dumps(value)
-            constance.save(update_fields=["value"])
-        else:
-            old_value = None
-
-        if self._cache:
-            self._cache.set(key, value)
-
-        signals.config_updated.send(sender=config, key=key, old_value=old_value, new_value=value)
+        pass
 
     async def aset(self, key, value):
-        from asgiref.sync import sync_to_async
-
-        # We use sync_to_async because Django's transaction.atomic() and database connections are thread-local.
-        # This ensures the operation runs in the correct database thread until native async transactions are supported.
-        return await sync_to_async(self.set, thread_sensitive=True)(key, value)
+        pass
 
     def clear(self, sender, instance, created, **kwargs):
-        if self._cache and not created:
-            keys = [self.add_prefix(k) for k in settings.CONFIG]
-            keys.append(self.add_prefix(self._autofill_cachekey))
-            self._cache.delete_many(keys)
-            self.autofill()
+        pass
