@@ -110,3 +110,4 @@ extend-allowed-calls = ["unittest.mock.patch", "django.db.models.Value"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.settings"
+pythonpath = ["."]
